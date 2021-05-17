@@ -43,7 +43,7 @@ public class CommentService {
             Optional<Comment> optionalComment = commentRepository.findById(id);
             if (optionalComment.isPresent()) {
                 Comment comment = optionalComment.get();
-                if (comment.getCreatedBy().equals(user)) {
+                if (comment.getCreatedBy().equals(user.getId())) {
                     commentRepository.deleteById(id);
                 }
             }
@@ -69,14 +69,19 @@ public class CommentService {
 
     // edit
     public ApiResponse edit(Long id, CommentDto commentDto) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<Comment> optionalComment = commentRepository.findById(id);
         if (!optionalComment.isPresent()) {
             return new ApiResponse("Comment not found", false);
         }
         Comment comment = optionalComment.get();
-        comment.setText(commentDto.getText());
-        commentRepository.save(comment);
-        return new ApiResponse("Comment successfully edited", true);
+
+        if (comment.getCreatedBy().equals(user.getId())) {
+            comment.setText(commentDto.getText());
+            commentRepository.save(comment);
+            return new ApiResponse("Comment successfully edited", true);
+        }
+        return new ApiResponse("You can not edit this comment", false);
     }
 
 
